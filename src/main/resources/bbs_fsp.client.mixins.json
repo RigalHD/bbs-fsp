@@ -1,0 +1,17 @@
+{
+    "required": true,
+    "package": "mchorse.bbs_fsp.mixin.client",
+    "compatibilityLevel": "${mixin_java}",
+    "client": [
+        "BBSRenderingMixin",
+        "CanvasMouseMixin",
+        "ExtraFormSectionMixin",
+        "ModelManagerMixin",
+        "UIBaseMenuMixin",
+        "UIFilmPreviewMixin",
+        "UIOrbitCameraMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

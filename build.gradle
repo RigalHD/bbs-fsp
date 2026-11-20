@@ -1,0 +1,256 @@
+plugins {
+    id 'fabric-loom' version '1.15-SNAPSHOT'
+    id 'maven-publish'
+}
+
+def targetName = (project.findProperty('target') ?: project.default_target).toString()
+def targetFile = file("targets/${targetName}.properties")
+
+if (!targetFile.exists())
+{
+    def available = file('targets').list().findAll { it.endsWith('.properties') }.collect { it - '.properties' }.sort()
+
+    throw new GradleException("Unknown target '${targetName}'. Available targets: ${available.join(', ')}")
+}
+
+def target = new Properties()
+targetFile.withInputStream { target.load(it) }
+
+def targetProperty = { String key ->
+    def value = target.getProperty(key)
+
+    if (value == null)
+    {
+        throw new GradleException("${targetFile.name} does not define '${key}'")
+    }
+
+    return value
+}
+
+def platform = targetProperty('platform')
+def minecraftVersion = targetProperty('minecraft_version')
+def javaVersion = targetProperty('java_version') as int
+def bbsBuild = targetProperty('bbs_build')
+def bbsJar = file(project.findProperty('bbs_jar') ?: "../bbs-fs-builds/${bbsBuild}/build/libs/bbs-${bbsBuild}.jar")
+
+if (!bbsJar.exists())
+{
+    throw new GradleException("BBS FS jar not found: ${bbsJar}. Run scripts/prepare-bbs.sh first or pass -Pbbs_jar=<path>.")
+}
+
+version = "${project.mod_version}+bbs${targetProperty('bbs_series')}-${minecraftVersion}"
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+layout.buildDirectory = file("build/${targetName}")
+
+repositories {
+    maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
+    mavenCentral()
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        'bbs_fsp' {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+sourceSets {
+    client {
+        java {
+            srcDir "src/${platform}/client/java"
+        }
+    }
+}
+
+/* In-game checks that open a real client, paint and pick colours through simulated input.
+ * Fabric's client game tests exist from Minecraft 1.21.4, so only the 1.21.11 targets have them.
+ * The test mod lives in its own source set and never ends up in the released jar. */
+def hasClientGameTests = file("src/${platform}/gametest").isDirectory()
+
+if (hasClientGameTests)
+{
+    fabricApi {
+        configureTests {
+            createSourceSet = true
+            modId = 'bbs_fsp_gametest'
+            enableGameTests = false
+            enableClientGameTests = true
+            eula = project.hasProperty('acceptEula')
+        }
+    }
+
+    sourceSets {
+        gametest {
+            java.srcDirs = ["src/${platform}/gametest/java"]
+            resources.srcDirs = ["src/${platform}/gametest/resources"]
+            compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+            runtimeClasspath += sourceSets.client.output
+        }
+    }
+}
+
+/* A real dedicated server, without any client class on its classpath, with a small mod that saves
+ * and loads a film carrying a canvas clip through BBS and then stops the server. Started with
+ * runDevserver. Starting a Minecraft server needs its EULA accepted: pass -PacceptEula to write
+ * eula=true into the server's run folder. */
+sourceSets {
+    devserver {
+        java.srcDirs = ['src/devserver/java']
+        resources.srcDirs = ['src/devserver/resources']
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
+}
+
+def devServerDir = file("build/${targetName}/run/devserver")
+
+loom {
+    mods {
+        'bbs_fsp_devserver' {
+            sourceSet sourceSets.devserver
+        }
+    }
+
+    runs {
+        devserver {
+            server()
+            name 'BBS FSP dedicated server checks'
+            source sourceSets.devserver
+            runDir "build/${targetName}/run/devserver"
+            programArgs '--nogui'
+
+            if (project.hasProperty('serverCheckHost'))
+            {
+                vmArg '-Dbbs_fsp.serverCheck.host=true'
+            }
+        }
+    }
+}
+
+tasks.matching { it.name == 'runDevserver' }.configureEach {
+    doFirst {
+        devServerDir.mkdirs()
+
+        def properties = new File(devServerDir, 'server.properties')
+
+        if (!properties.exists())
+        {
+            properties.text = 'online-mode=false\nlevel-type=minecraft\\:flat\nserver-port=25601\nspawn-protection=0\ngenerate-structures=false\n'
+        }
+
+        if (project.hasProperty('acceptEula'))
+        {
+            new File(devServerDir, 'eula.txt').text = 'eula=true\n'
+        }
+    }
+}
+
+/* Minecraft 1.20.4 has no client game tests, so its in-game checks are a small driver mod that
+ * creates a world, opens the film editor and feeds events straight to the game's handlers.
+ * Started with runDevtest, never part of the released jar. */
+def hasDevTest = file("src/${platform}/devtest").isDirectory()
+
+if (hasDevTest)
+{
+    sourceSets {
+        devtest {
+            java.srcDirs = ["src/${platform}/devtest/java"]
+            resources.srcDirs = ["src/${platform}/devtest/resources"]
+            compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output + sourceSets.client.output + sourceSets.client.compileClasspath
+            runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output + sourceSets.client.output + sourceSets.client.runtimeClasspath
+        }
+    }
+
+    loom {
+        mods {
+            'bbs_fsp_devtest' {
+                sourceSet sourceSets.devtest
+            }
+        }
+
+        runs {
+            devtest {
+                client()
+                name 'BBS FSP in-game checks'
+                source sourceSets.devtest
+                runDir "build/${targetName}/run/devtest"
+
+                if (project.hasProperty('devtestServer'))
+                {
+                    vmArg "-Dbbs_fsp.devtest.server=${project.devtestServer}"
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    mappings "net.fabricmc:yarn:${targetProperty('yarn_mappings')}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${targetProperty('loader_version')}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${targetProperty('fabric_version')}"
+    modImplementation files(bbsJar)
+}
+
+processResources {
+    def properties = [
+        version: project.version,
+        minecraft_dependency: targetProperty('minecraft_dependency'),
+        loader_dependency: targetProperty('loader_dependency'),
+        bbs_dependency: targetProperty('bbs_dependency'),
+        java_dependency: ">=${javaVersion}",
+        mixin_java: "JAVA_${javaVersion}"
+    ]
+
+    inputs.properties properties
+
+    filesMatching(['fabric.mod.json', '*.mixins.json']) {
+        expand properties
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = javaVersion
+    it.options.encoding = 'UTF-8'
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
+}
+
+def registerCheck = { String name, String mainClassName ->
+    tasks.register(name, JavaExec) {
+        group = 'verification'
+        classpath = sourceSets.test.runtimeClasspath
+        mainClass = mainClassName
+        workingDir = projectDir
+    }
+}
+
+registerCheck('checkCanvasFrames', 'mchorse.bbs_fsp.canvas.CanvasFramesCheck')
+registerCheck('checkCanvasBrushes', 'mchorse.bbs_fsp.canvas.brush.CanvasBrushCheck')
+registerCheck('checkStrings', 'mchorse.bbs_fsp.CanvasStringsCheck')
+registerCheck('checkGraffiti', 'mchorse.bbs_fsp.graffiti.GraffitiCheck')
+registerCheck('checkBBModel', 'mchorse.bbs_fsp.bbmodel.BBModelCheck')
+
+tasks.register('checkCanvas') {
+    group = 'verification'
+    dependsOn 'checkCanvasFrames', 'checkCanvasBrushes', 'checkStrings', 'checkGraffiti', 'checkBBModel'
+}
+
+tasks.register('collectJar', Copy) {
+    dependsOn 'remapJar'
+    from remapJar.archiveFile
+    into file('dist')
+}

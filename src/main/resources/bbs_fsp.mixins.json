@@ -1,0 +1,9 @@
+{
+    "required": true,
+    "package": "mchorse.bbs_fsp.mixin",
+    "compatibilityLevel": "${mixin_java}",
+    "mixins": ["DataParserMixin", "FormPropertiesMixin"],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

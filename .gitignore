@@ -1,0 +1,15 @@
+# Gradle and build output
+.gradle/
+build/
+run/
+logs/
+dist/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local tools and OS files
+graphify-out/
+.DS_Store
+.idea/
+*.iml
+.vscode/

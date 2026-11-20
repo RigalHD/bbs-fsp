@@ -1,0 +1,13 @@
+{
+    "schemaVersion": 1,
+    "id": "bbs_fsp_devserver",
+    "version": "1.0.0",
+    "name": "BBS FSP dedicated server checks",
+    "environment": "server",
+    "entrypoints": {
+        "server": ["mchorse.bbs_fsp.devserver.CanvasServerCheck"]
+    },
+    "depends": {
+        "bbs_fsp": "*"
+    }
+}

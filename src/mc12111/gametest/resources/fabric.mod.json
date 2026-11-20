@@ -1,0 +1,14 @@
+{
+    "schemaVersion": 1,
+    "id": "bbs_fsp_gametest",
+    "version": "1.0.0",
+    "name": "BBS FSP in-game checks",
+    "environment": "client",
+    "entrypoints": {
+        "client": ["mchorse.bbs_fsp.test.TestSilence"],
+        "fabric-client-gametest": ["mchorse.bbs_fsp.test.BBModelClientGameTest", "mchorse.bbs_fsp.test.GraffitiClientGameTest", "mchorse.bbs_fsp.test.CanvasClientGameTest"]
+    },
+    "depends": {
+        "bbs_fsp": "*"
+    }
+}

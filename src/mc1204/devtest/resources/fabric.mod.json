@@ -1,0 +1,16 @@
+{
+    "schemaVersion": 1,
+    "id": "bbs_fsp_devtest",
+    "version": "1.0.0",
+    "name": "BBS FSP in-game checks",
+    "environment": "client",
+    "entrypoints": {
+        "client": ["mchorse.bbs_fsp.devtest.CanvasDevTest"]
+    },
+    "mixins": [
+        "bbs_fsp_devtest.mixins.json"
+    ],
+    "depends": {
+        "bbs_fsp": "*"
+    }
+}
