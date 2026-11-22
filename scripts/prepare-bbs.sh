@@ -14,6 +14,8 @@ OUT="${BBS_BUILDS:-$ROOT/../bbs-fs-builds}"
 declare -a VERSIONS=(
     "2.6-1.20.4:5b913c52b29521687f79712b580ce1365a04d140"
     "2.6.1-1.20.4:fb6795eeb74d5504c3576b302f322451f1adf54b"
+    "2.6-1.20.1:a4babb685651ea61313f8bcde1aef3f0ad83a15f"
+    "2.6.1-1.20.1:3b36bad693c02207c66801caeb3f09859a30da52"
     "2.7-1.20.1:998c9d585427b4cf0061940496ae1f6a7df1bb03"
     "2.7-1.20.4:13bd62dab1980b974b8ea0f78d037e8e82684b84"
     "2.6-1.21.11:f66cdcb7b"

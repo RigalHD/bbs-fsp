@@ -21,6 +21,7 @@ fi
 # Extra BBS builds of the same series every target must also compile against.
 compat_builds() {
     case "$1" in
+        1.20.1-bbs2.6) echo "2.6-1.20.1" ;;
         1.20.4-bbs2.6) echo "2.6-1.20.4" ;;
         1.21.11-bbs2.6) echo "2.6-1.21.11" ;;
         *) echo "" ;;

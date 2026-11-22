@@ -8,6 +8,7 @@ It also adds the `bbs_fsp:graffiti` form (Graffiti), a picture that lives in the
 
 | Jar | Minecraft | Java | BBS FS |
 | --- | --- | --- | --- |
+| `bbs-fsp-<version>+bbs2.6-1.20.1.jar` | 1.20.1 | 17 | 2.6, 2.6.1 |
 | `bbs-fsp-<version>+bbs2.7-1.20.1.jar` | 1.20.1 | 17 | 2.7 |
 | `bbs-fsp-<version>+bbs2.6-1.20.4.jar` | 1.20.4 | 17 | 2.6, 2.6.1 |
 | `bbs-fsp-<version>+bbs2.7-1.20.4.jar` | 1.20.4 | 17 | 2.7 |
