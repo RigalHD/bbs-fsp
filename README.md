@@ -8,6 +8,7 @@ It also adds the `bbs_fsp:graffiti` form (Graffiti), a picture that lives in the
 
 | Jar | Minecraft | Java | BBS FS |
 | --- | --- | --- | --- |
+| `bbs-fsp-<version>+bbs2.7-1.20.1.jar` | 1.20.1 | 17 | 2.7 |
 | `bbs-fsp-<version>+bbs2.6-1.20.4.jar` | 1.20.4 | 17 | 2.6, 2.6.1 |
 | `bbs-fsp-<version>+bbs2.7-1.20.4.jar` | 1.20.4 | 17 | 2.7 |
 | `bbs-fsp-<version>+bbs2.6-1.21.11.jar` | 1.21.11 | 21 | 2.6, 2.6.1 |
@@ -45,6 +46,7 @@ In-game checks start a real client in a throwaway run folder (offline player, no
 ```text
 ./gradlew -Ptarget=1.21.11-bbs2.7 runClientGameTest   # Fabric client game test, build/run/clientGameTest/screenshots
 ./gradlew -Ptarget=1.20.4-bbs2.7 runDevtest           # 1.20.4 has no client game tests: a driver mod, build/1.20.4-bbs2.7/run/devtest/screenshots
+./gradlew -Ptarget=1.20.1-bbs2.7 runDevtest           # the same driver on 1.20.1 (both share src/mc1204)
 ```
 
 Dedicated server checks start a real server whose classpath has no Minecraft client classes. A small server mod checks the clip registration, saves and loads a painted film through BBS's own storage and stops the server. Starting a Minecraft server means accepting its EULA, which `-PacceptEula` does for the test folder only:

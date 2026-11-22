@@ -50,7 +50,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
 import net.minecraft.client.gui.screen.world.CreateWorldScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ServerAddress;
@@ -127,7 +126,7 @@ public final class CanvasDevTest implements ClientModInitializer
         int width = CanvasClip.DEFAULT_WIDTH;
         int height = CanvasClip.DEFAULT_HEIGHT;
 
-        this.step("title screen", 20, (client) -> client.currentScreen instanceof TitleScreen);
+        this.step("title screen", 20, CanvasDevTest::titleScreen);
         this.run("join " + address, 0, (client) -> join(client, address));
         this.step("joined", 100, (client) -> client.world != null && client.player != null && client.currentScreen == null);
         this.run("open the film editor", 60, (client) -> this.clip = openEditor(id, width, height));
@@ -185,10 +184,56 @@ public final class CanvasDevTest implements ClientModInitializer
         });
     }
 
+    /** The title screen; a fresh game first asks about accessibility (a new run folder does), which the checks skip. */
+    private static boolean titleScreen(MinecraftClient client)
+    {
+        if (client.currentScreen != null && client.currentScreen.getClass().getSimpleName().equals("AccessibilityOnboardingScreen"))
+        {
+            client.setScreen(new TitleScreen());
+        }
+
+        return client.currentScreen instanceof TitleScreen;
+    }
+
     private static void join(MinecraftClient client, String address)
     {
-        ConnectScreen.connect(new TitleScreen(), client, ServerAddress.parse(address),
-            new ServerInfo("BBS FSP checks", address, ServerInfo.ServerType.OTHER), false);
+        /* Shared by 1.20.1 and 1.20.4: 1.20.2 moved the connect screen and gave server info a type in
+         * place of its "local" flag, so the devtest looks up whichever this game has. */
+        try
+        {
+            ServerInfo info;
+
+            try
+            {
+                Class<?> type = Class.forName("net.minecraft.client.network.ServerInfo$ServerType");
+                @SuppressWarnings({"unchecked", "rawtypes"})
+                Object other = Enum.valueOf((Class) type, "OTHER");
+
+                info = ServerInfo.class.getConstructor(String.class, String.class, type).newInstance("BBS FSP checks", address, other);
+            }
+            catch (ClassNotFoundException e)
+            {
+                info = ServerInfo.class.getConstructor(String.class, String.class, boolean.class).newInstance("BBS FSP checks", address, false);
+            }
+
+            Class<?> screen;
+
+            try
+            {
+                screen = Class.forName("net.minecraft.client.gui.screen.multiplayer.ConnectScreen");
+            }
+            catch (ClassNotFoundException e)
+            {
+                screen = Class.forName("net.minecraft.client.gui.screen.ConnectScreen");
+            }
+
+            screen.getMethod("connect", Screen.class, MinecraftClient.class, ServerAddress.class, ServerInfo.class, boolean.class)
+                .invoke(null, new TitleScreen(), client, ServerAddress.parse(address), info, false);
+        }
+        catch (ReflectiveOperationException e)
+        {
+            throw new AssertionError("could not join " + address, e);
+        }
     }
 
     private static void leave(MinecraftClient client)
@@ -257,7 +302,7 @@ public final class CanvasDevTest implements ClientModInitializer
 
     private void plan()
     {
-        this.step("title screen", 20, (client) -> client.currentScreen instanceof TitleScreen);
+        this.step("title screen", 20, CanvasDevTest::titleScreen);
         this.run("open world creation", 40, (client) -> CreateWorldScreen.create(client, client.currentScreen));
         this.step("create the world", 0, (client) -> pressButton(client.currentScreen, "selectWorld.create"));
         this.step("world loaded", 200, (client) -> client.world != null && client.player != null && client.currentScreen == null);
