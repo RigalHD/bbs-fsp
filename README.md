@@ -8,11 +8,11 @@ It also adds the `bbs_fsp:graffiti` form (Graffiti), a picture that lives in the
 
 | Jar | Minecraft | Java | BBS FS |
 | --- | --- | --- | --- |
-| `bbs-fsp-<version>+bbs2.6-1.20.1.jar` | 1.20.1 | 17 | 2.6, 2.6.1 |
+| `bbs-fsp-<version>+bbs2.6-1.20.1.jar` | 1.20.1 | 17 | 2.6.x |
 | `bbs-fsp-<version>+bbs2.7-1.20.1.jar` | 1.20.1 | 17 | 2.7 |
-| `bbs-fsp-<version>+bbs2.6-1.20.4.jar` | 1.20.4 | 17 | 2.6, 2.6.1 |
+| `bbs-fsp-<version>+bbs2.6-1.20.4.jar` | 1.20.4 | 17 | 2.6.x |
 | `bbs-fsp-<version>+bbs2.7-1.20.4.jar` | 1.20.4 | 17 | 2.7 |
-| `bbs-fsp-<version>+bbs2.6-1.21.11.jar` | 1.21.11 | 21 | 2.6, 2.6.1 |
+| `bbs-fsp-<version>+bbs2.6-1.21.11.jar` | 1.21.11 | 21 | 2.6.x |
 | `bbs-fsp-<version>+bbs2.7-1.21.11.jar` | 1.21.11 | 21 | 2.7 |
 
 BBS FS reports its version as `<version>-<minecraft>` (for example `2.6-1.20.4`), which semantic versioning treats as a pre-release of `2.6`. The dependency ranges therefore end in `-` (`>=2.6- <2.7-`), otherwise Fabric Loader would reject BBS 2.6 itself and accept 2.7 instead.
